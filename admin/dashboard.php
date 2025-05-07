@@ -15,6 +15,10 @@ $totalArticles = $stmt->fetch()['total'];
 // Ambil jumlah kategori
 $stmt = $pdo->query("SELECT COUNT(*) as total FROM categories");
 $totalCategories = $stmt->fetch()['total'];
+
+// Ambil jumlah user
+$stmt = $pdo->query("SELECT COUNT(*) as total FROM users");
+$totalUsers = $stmt->fetch()['total'];
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -25,6 +29,11 @@ $totalCategories = $stmt->fetch()['total'];
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
+    <div class="bg-primary bg-gradient text-white py-4 mb-4 rounded-bottom shadow-sm">
+        <div class="container">
+            <h1 class="display-5 fw-bold mb-0 text-center">DASHBOARD ADMIN</h1>
+        </div>
+    </div>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="dashboard.php">Dashboard Admin</a>
@@ -53,7 +62,7 @@ $totalCategories = $stmt->fetch()['total'];
         <h2>Selamat Datang, <?php echo htmlspecialchars($_SESSION['username']); ?>!</h2>
         
         <div class="row mt-4">
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Total Artikel</h5>
@@ -62,12 +71,20 @@ $totalCategories = $stmt->fetch()['total'];
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="card">
+            <div class="col-md-4">
+                <div class="card bg-success text-white">
                     <div class="card-body">
                         <h5 class="card-title">Total Kategori</h5>
                         <p class="card-text display-4"><?php echo $totalCategories; ?></p>
-                        <a href="categories.php" class="btn btn-primary">Kelola Kategori</a>
+                        <a href="categories.php" class="btn btn-light">Kelola Kategori</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Total User</h5>
+                        <p class="card-text display-4"><?php echo $totalUsers; ?></p>
                     </div>
                 </div>
             </div>

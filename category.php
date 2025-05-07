@@ -1,23 +1,36 @@
 <?php
 require_once 'config/database.php';
 
-// Ambil semua artikel dengan kategori
-$stmt = $pdo->query("SELECT articles.*, categories.name as category_name 
-                     FROM articles 
-                     LEFT JOIN categories ON articles.category_id = categories.id 
-                     ORDER BY articles.created_at DESC");
-$articles = $stmt->fetchAll();
+if (!isset($_GET['id'])) {
+    header("Location: index.php");
+    exit();
+}
 
-// Ambil semua kategori untuk sidebar
-$stmt = $pdo->query("SELECT * FROM categories ORDER BY name");
-$categories = $stmt->fetchAll();
+// Ambil detail kategori
+$stmt = $pdo->prepare("SELECT * FROM categories WHERE id = ?");
+$stmt->execute([$_GET['id']]);
+$category = $stmt->fetch();
+
+if (!$category) {
+    header("Location: index.php");
+    exit();
+}
+
+// Ambil artikel berdasarkan kategori
+$stmt = $pdo->prepare("SELECT articles.*, categories.name as category_name 
+                       FROM articles 
+                       LEFT JOIN categories ON articles.category_id = categories.id 
+                       WHERE articles.category_id = ? 
+                       ORDER BY articles.created_at DESC");
+$stmt->execute([$_GET['id']]);
+$articles = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CMS Sederhana</title>
+    <title>Kategori: <?php echo htmlspecialchars($category['name']); ?> - CMS Sederhana</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
@@ -43,9 +56,6 @@ $categories = $stmt->fetchAll();
                         <li class="nav-item">
                             <a class="nav-link" href="login.php">Login</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="register.php">Register</a>
-                        </li>
                     <?php endif; ?>
                 </ul>
             </div>
@@ -55,16 +65,23 @@ $categories = $stmt->fetchAll();
     <div class="container mt-4">
         <div class="row">
             <div class="col-md-8">
-                <h1 class="mb-4">Artikel Terbaru</h1>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="index.php">Beranda</a></li>
+                        <li class="breadcrumb-item active"><?php echo htmlspecialchars($category['name']); ?></li>
+                    </ol>
+                </nav>
+
+                <h1 class="mb-4">Kategori: <?php echo htmlspecialchars($category['name']); ?></h1>
+
                 <?php if (empty($articles)): ?>
-                    <div class="alert alert-info">Belum ada artikel yang dipublikasikan.</div>
+                    <div class="alert alert-info">Belum ada artikel dalam kategori ini.</div>
                 <?php else: ?>
                     <?php foreach ($articles as $article): ?>
                         <div class="card mb-4">
                             <div class="card-body">
                                 <h2 class="card-title"><?php echo htmlspecialchars($article['title']); ?></h2>
                                 <p class="text-muted">
-                                    Kategori: <?php echo htmlspecialchars($article['category_name']); ?> | 
                                     Tanggal: <?php echo date('d/m/Y H:i', strtotime($article['created_at'])); ?>
                                 </p>
                                 <p class="card-text"><?php echo nl2br(htmlspecialchars(substr($article['content'], 0, 300) . '...')); ?></p>
@@ -74,31 +91,9 @@ $categories = $stmt->fetchAll();
                     <?php endforeach; ?>
                 <?php endif; ?>
             </div>
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Kategori</h5>
-                    </div>
-                    <div class="card-body">
-                        <?php if (empty($categories)): ?>
-                            <p class="text-muted">Belum ada kategori.</p>
-                        <?php else: ?>
-                            <ul class="list-unstyled">
-                                <?php foreach ($categories as $category): ?>
-                                    <li class="mb-2">
-                                        <a href="category.php?id=<?php echo $category['id']; ?>" class="text-decoration-none">
-                                            <?php echo htmlspecialchars($category['name']); ?>
-                                        </a>
-                                    </li>
-                                <?php endforeach; ?>
-                            </ul>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-</html> tidak bisa login 
+</html> 
