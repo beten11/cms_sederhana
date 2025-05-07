@@ -6,18 +6,36 @@ if (!isset($_GET['id'])) {
     exit();
 }
 
+$article_id = $_GET['id'];
+
+// Proses rating
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['rating'])) {
+    $rating = (int)$_POST['rating'];
+    if ($rating >= 1 && $rating <= 5) {
+        $stmt = $pdo->prepare("INSERT INTO ratings (article_id, rating) VALUES (?, ?)");
+        $stmt->execute([$article_id, $rating]);
+    }
+}
+
 // Ambil detail artikel
 $stmt = $pdo->prepare("SELECT articles.*, categories.name as category_name 
                        FROM articles 
                        LEFT JOIN categories ON articles.category_id = categories.id 
                        WHERE articles.id = ?");
-$stmt->execute([$_GET['id']]);
+$stmt->execute([$article_id]);
 $article = $stmt->fetch();
 
 if (!$article) {
     header("Location: index.php");
     exit();
 }
+
+// Ambil rata-rata rating
+$stmt = $pdo->prepare("SELECT AVG(rating) as avg_rating, COUNT(*) as total_rating FROM ratings WHERE article_id = ?");
+$stmt->execute([$article_id]);
+$ratingData = $stmt->fetch();
+$avg_rating = $ratingData['avg_rating'] ? round($ratingData['avg_rating'], 2) : 0;
+$total_rating = $ratingData['total_rating'];
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -26,6 +44,22 @@ if (!$article) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($article['title']); ?> - CMS Sederhana</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        .star-rating .bi-star-fill {
+            color: #ffc107;
+            font-size: 1.5rem;
+        }
+        .star-rating .bi-star {
+            color: #ccc;
+            font-size: 1.5rem;
+        }
+        .star-rating-form button {
+            background: none;
+            border: none;
+            padding: 0;
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -72,10 +106,36 @@ if (!$article) {
                         Kategori: <?php echo htmlspecialchars($article['category_name']); ?> | 
                         Tanggal: <?php echo date('d/m/Y H:i', strtotime($article['created_at'])); ?>
                     </p>
-                    <div class="content">
+                    <div class="content mb-4">
                         <?php echo nl2br(htmlspecialchars($article['content'])); ?>
                     </div>
                 </article>
+
+                <!-- RATING SECTION -->
+                <div class="mb-4">
+                    <h5>Rating Artikel</h5>
+                    <div class="star-rating mb-2">
+                        <?php
+                        for ($i = 1; $i <= 5; $i++) {
+                            if ($i <= round($avg_rating)) {
+                                echo '<i class="bi bi-star-fill"></i>';
+                            } else {
+                                echo '<i class="bi bi-star"></i>';
+                            }
+                        }
+                        ?>
+                        <span class="ms-2"><?php echo $avg_rating; ?> / 5 (<?php echo $total_rating; ?> rating)</span>
+                    </div>
+                    <form method="POST" class="star-rating-form">
+                        <span>Beri rating:</span>
+                        <?php for ($i = 1; $i <= 5; $i++): ?>
+                            <button type="submit" name="rating" value="<?php echo $i; ?>" title="<?php echo $i; ?> bintang">
+                                <i class="bi bi-star"></i>
+                            </button>
+                        <?php endfor; ?>
+                    </form>
+                </div>
+                <!-- END RATING SECTION -->
             </div>
         </div>
     </div>
